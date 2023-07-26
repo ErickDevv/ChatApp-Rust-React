@@ -70,11 +70,18 @@ fn generate_token(user_id: &str) -> Result<String, String> {
     Ok(token)
 }
 
+#[handler]
+async fn signin(req: &mut Request, res: &mut Response) {
+    res.status_code(StatusCode::OK);
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt().init();
 
-    let router = Router::new().push(Router::new().path("signup").post(signup));
+    let router = Router::new()
+    .push(Router::new().path("signup").post(signup))
+    .push(Router::new().path("signin").post(signin));
 
     let acceptor = TcpListener::new("127.0.0.1:5800").bind().await;
 
