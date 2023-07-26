@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: "rust"
+    directory: "/chatapp-rust"
+    schedule:
+      interval: "daily"
+    allow:
+      - dependency-type: "security"
