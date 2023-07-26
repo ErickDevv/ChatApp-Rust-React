@@ -1,6 +1,6 @@
 version: 2
 updates:
   - package-ecosystem: "cargo"
-    directory: "/chatapp-rust"
+    directory: "/server"
     schedule:
       interval: "daily"
