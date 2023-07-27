@@ -127,7 +127,7 @@ async fn main() {
         .push(Router::new().path("signup").post(signup));
     //.push(Router::new().path("signin").post(signin));
 
-    let acceptor = TcpListener::new("127.0.0.1:5800").bind().await;
+    let acceptor = TcpListener::new("0.0.0.0:5800").bind().await;
 
     Server::new(acceptor).serve(router).await;
 }
