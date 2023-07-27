@@ -1,4 +1,4 @@
-use jsonwebtoken::{self, EncodingKey};
+use jsonwebtoken::{self, decode, Algorithm, DecodingKey, EncodingKey, Validation};
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -70,8 +70,49 @@ fn generate_token(user_id: &str) -> Result<String, String> {
     Ok(token)
 }
 
+async fn authorize(jwt: &str) -> Result<String, String> {
+    let decoded = decode::<JwtClaims>(
+        &jwt,
+        &DecodingKey::from_secret(SECRET_KEY.as_bytes()),
+        &Validation::new(Algorithm::HS256),
+    );
+
+    match decoded {
+        Ok(token) => {
+            let user_id = token.claims.user_id;
+            return Ok(user_id);
+        }
+        Err(_err) => {
+            return Err(_err.to_string());
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Auth {
+    token: String,
+}
+
 #[handler]
-async fn signin(req: &mut Request, res: &mut Response) {
+async fn welcome(req: &mut Request, res: &mut Response) {
+    match req.parse_body::<Auth>().await {
+        Ok(token) => {
+            let user_id = match authorize(token.token.as_str()).await {
+                Ok(user_id) => user_id,
+                Err(_err) => {
+                    res.status_code(StatusCode::UNAUTHORIZED);
+                    return;
+                }
+            };
+
+            res.render(format!("Welcome {}", user_id));
+        }
+        Err(_err) => {
+            res.status_code(StatusCode::BAD_REQUEST);
+            return;
+        }
+    };
+
     res.status_code(StatusCode::OK);
 }
 
@@ -79,9 +120,12 @@ async fn signin(req: &mut Request, res: &mut Response) {
 async fn main() {
     tracing_subscriber::fmt().init();
 
+    println!("Starting server at http://");
+
     let router = Router::new()
-    .push(Router::new().path("signup").post(signup))
-    .push(Router::new().path("signin").post(signin));
+        .push(Router::new().path("welcome").get(welcome))
+        .push(Router::new().path("signup").post(signup));
+    //.push(Router::new().path("signin").post(signin));
 
     let acceptor = TcpListener::new("127.0.0.1:5800").bind().await;
 
