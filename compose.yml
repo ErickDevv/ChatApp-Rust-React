@@ -1,0 +1,16 @@
+services:
+  server:
+    build: ./server
+    volumes: 
+      - ./server:/app
+    ports:
+      - 5800:5800
+    links:
+      - mongo
+  mongo:
+    restart: always
+    image: mongo:4.2.0
+    volumes:
+      - ./data:/data/db
+    expose:
+      - 27017
